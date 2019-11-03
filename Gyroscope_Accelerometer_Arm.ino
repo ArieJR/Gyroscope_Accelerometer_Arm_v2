@@ -17,7 +17,10 @@
 
 
 //Gyro Variables
-float elapsedTime, time, timePrev;        //Variables for time control
+float elapsedTime250ms, elapsedTime5min, time;        //Variables for time control
+float timePrev250ms = 0;
+float timePrev5min = 0;
+int 5minuteTimeFrame = 0;
 float Gyr_rawX, Gyr_rawY, Gyr_rawZ;     //Here we store the raw data read 
 float Gyro_angle_x, Gyro_angle_y;         //Here we store the angle value obtained with Gyro data
 
@@ -26,6 +29,18 @@ float Acc_rawX, Acc_rawY, Acc_rawZ;    //Here we store the raw data read
 float Acc_angle_x, Acc_angle_y;          //Here we store the angle value obtained with Acc data
 
 float Total_angle_x, Total_angle_y;
+
+float Total_height_to_average_250ms;
+float Total_height_to_average_5min;
+int Number_of_readings_250ms;
+int Number_of_readings_5min;
+
+float Average_height;
+float Data_storage[][];
+float Data_storage_sorted[][];
+float Data_to_send[][];
+int Data_storage_counter = 0;
+
 
 
 void setup() {
@@ -50,10 +65,10 @@ void setup() {
   time = millis();                        //Start counting time in milliseconds
 }
 
-void loop() {
-  timePrev = time;                        // the previous time is stored before the actual time read
+void loop() {                        // the previous time is stored before the actual time read
   time = millis();                        // actual time read
-  elapsedTime = (time - timePrev) / 1000; //divide by 1000 in order to obtain seconds
+  elapsedTime250ms = (time - timePrev250ms);        // elapsed time in ms
+  elapsedTime5min = (time - timePrev5min);
 
   //////////////////////////////////////Gyro read/////////////////////////////////////
 
@@ -122,7 +137,76 @@ void loop() {
  //Serial.println(set_height+delta_height);
  Serial.println(" ");
  //delay(250);
+if(elapsedTime250ms >= 250){
+  Total_height_to_average_250ms = Total_height_to_average_250ms + Total_angle_y;
+  Number_of_readings_250ms++;
+  Data_storage[5minTimeFrame][Data_storage_counter] = Total_height_to_average_250_ms/Number_of_readings;
+  
+  
+  Total_height_to_average_5min = Total_height_to_average_5min + Total_angle_y;
+  Number_of_readings_5min++;
+  
+  Data_storage_counter++;
+  
+  Total_height_to_average_250ms = 0;
+  Number_of_readings_250ms = 0;
+  timePrev250ms = time;
 }
+else {
+  Total_height_to_average_250ms = Total_height_to_average_250ms + Total_angle_y;
+  Number_of_readings_250ms++; 
+
+  Total_height_to_average_5min = Total_height_to_average5min + Total_angle_y;
+  Number_of_readings_5min++; 
+}
+if elapsedTime5min >= 300000){
+  Data_to_send[5minTimeFrame][0] = {Total_height_to_average5min/Number_of_readings_5min};
+  
+  
+  5minTimeFrame++;
+  timePrev5min = time;
+  
+  Number_of_readings_5min = 0;
+  
+} 
+}
+
+void sort(int timeFrame, float height, int readings){
+   float temp;
+   float replaced;
+  if (readings == 0){
+    Data_storage_sorted[timeFrame][readings] = {height};
+  }
+  else if (Data_storage_sorted[timeFrame][(readings-1)/2] == height){
+    replaced = height;
+    for(i = (readings-1)/2; i>=0 ; i--){
+      temp = Data_storage_sorted[timeFrame][i] ;
+      Data_storage_sorted[timeFrame][i] = {replaced};
+      replaced = temp;
+    }
+    
+  }
+  else if (Data_storage_sorted[timeFrame][(readings-1)/2] > height){
+    replaced = height;
+    for(i = (readings-1)/2; i>=0 ; i--){
+      temp = Data_storage_sorted[timeFrame][i] ;
+      Data_storage_sorted[timeFrame][i] = {replaced};
+      replaced = temp;
+    }
+  }
+  else {
+    replaced = height;
+    for(i = (readings-1)/2; i<=readings ; i++){
+      temp = Data_storage_sorted[timeFrame][i] ;
+      Data_storage_sorted[timeFrame][i] = {replaced};
+      replaced = temp;
+    }
+  }
+  float Data_storage_sorted[timeFrame][]
+
+}
+  
+  
 
 float calculateDeltaHeight(float angle, int armLength){
   return armLength*sin(degToRad(angle));
