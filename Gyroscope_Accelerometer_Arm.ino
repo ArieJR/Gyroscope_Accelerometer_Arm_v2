@@ -36,10 +36,10 @@ int Number_of_readings_250ms;
 int Number_of_readings_5min;
 
 float Average_height;
+float Highest_reading = 0;
+float Lowest_reading = 0;
 float Data_storage[][];
-float Data_storage_sorted[][];
 float Data_to_send[][];
-int Data_storage_counter = 0;
 
 
 
@@ -141,6 +141,16 @@ if(elapsedTime250ms >= 250){
   Total_height_to_average_250ms = Total_height_to_average_250ms + Total_angle_y;
   Number_of_readings_250ms++;
   Data_storage[5minTimeFrame][Data_storage_counter] = Total_height_to_average_250_ms/Number_of_readings;
+
+  if (Lowest_reading == 0){
+    Lowest_reading = Data_storage[5minTimeFrame][Data_storage_counter];
+  }
+  else if (Data_storage[5minTimeFrame][Data_storage_counter] > Highest_reading){
+    Highest_reading = Data_storage[5minTimeFrame][Data_storage_counter];
+  }
+  else if(Data_storage[5minTimeFrame][Data_storage_counter] < Lowest_reading){
+    Lowest_reading = Data_storage[5minTimeFrame][Data_storage_counter];
+  }
   
   
   Total_height_to_average_5min = Total_height_to_average_5min + Total_angle_y;
@@ -165,48 +175,19 @@ if elapsedTime5min >= 300000){
   
   5minTimeFrame++;
   timePrev5min = time;
-  
+  Lowest_reading = 0;
+  Highest_reading = 0;
   Number_of_readings_5min = 0;
   
 } 
 }
-
-void sort(int timeFrame, float height, int readings){
-   float temp;
-   float replaced;
-  if (readings == 0){
-    Data_storage_sorted[timeFrame][readings] = {height};
-  }
-  else if (Data_storage_sorted[timeFrame][(readings-1)/2] == height){
-    replaced = height;
-    for(i = (readings-1)/2; i>=0 ; i--){
-      temp = Data_storage_sorted[timeFrame][i] ;
-      Data_storage_sorted[timeFrame][i] = {replaced};
-      replaced = temp;
-    }
-    
-  }
-  else if (Data_storage_sorted[timeFrame][(readings-1)/2] > height){
-    replaced = height;
-    for(i = (readings-1)/2; i>=0 ; i--){
-      temp = Data_storage_sorted[timeFrame][i] ;
-      Data_storage_sorted[timeFrame][i] = {replaced};
-      replaced = temp;
-    }
-  }
-  else {
-    replaced = height;
-    for(i = (readings-1)/2; i<=readings ; i++){
-      temp = Data_storage_sorted[timeFrame][i] ;
-      Data_storage_sorted[timeFrame][i] = {replaced};
-      replaced = temp;
-    }
-  }
-  float Data_storage_sorted[timeFrame][]
-
+  
+float hoogste20(float high, float low){ 
+  return (high - low)*0,8+low;
 }
-  
-  
+float laagste20(float high, float low){ 
+  return (high - low)*0,2+low;
+}
 
 float calculateDeltaHeight(float angle, int armLength){
   return armLength*sin(degToRad(angle));
